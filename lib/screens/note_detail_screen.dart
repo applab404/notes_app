@@ -15,6 +15,7 @@ class NoteDetailScreen extends StatefulWidget {
 }
 
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
+  final _formKey = GlobalKey<FormState>();
   bool isEditing = false;
   Note? _note;
 
@@ -58,7 +59,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           ? NoteForm(
                             titleController: _titleController,
                             contentController: _contentController,
-                            enableValidation: false,
+                            enableValidation: true,
+                            formKey: _formKey,
                           )
                           : _buildNoteView(),
                 ),
@@ -141,15 +143,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
-    if (title.isEmpty || content.isEmpty) return;
+    if (title.isEmpty && content.isEmpty) {
+      deleteNote();
+    }
 
-    context.read<NoteProvider>().editNote(widget.noteId, title, content);
+    if (_formKey.currentState?.validate() ?? false) {
+      context.read<NoteProvider>().editNote(widget.noteId, title, content);
 
-    final updated = context.read<NoteProvider>().getNoteById(widget.noteId);
-    setState(() {
-      _note = updated;
-      isEditing = false;
-    });
+      final updated = context.read<NoteProvider>().getNoteById(widget.noteId);
+      setState(() {
+        _note = updated;
+        isEditing = false;
+      });
+    }
+  }
+
+  void deleteNote() {
+    context.read<NoteProvider>().deleteNote(widget.noteId);
+    Navigator.pop(context);
   }
 
   void _confirmDelete() {
@@ -168,8 +179,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  context.read<NoteProvider>().deleteNote(widget.noteId);
-                  Navigator.pop(context);
+                  deleteNote();
                   Navigator.pop(context);
                 },
                 child: const Text('Изтрий'),
