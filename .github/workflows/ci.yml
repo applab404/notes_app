@@ -1,0 +1,55 @@
+name: CI
+on:
+  push:
+    branches: ["develop", "staging", "main"]
+  pull_request:
+    branches: ["develop", staging, "main"]
+
+jobs:
+  flutter_test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/setup-java@v4
+        with:
+          distribution: "microsoft"
+          java-version: "17.x"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.29.x
+      - run: flutter --version
+      - name: Get the dependencies
+        run: flutter pub get
+      - run: flutter analyze
+      - name: Run the unit tests
+        run: flutter test
+  
+  build_appbundle:
+    name: Build Flutter (Android)
+    needs: [flutter_test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "microsoft"
+          java-version: "17.x"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.29.x
+      - name: Get the dependencies
+        run: flutter pub get
+      - name: Clean
+        run: flutter clean
+      - name: Build the application
+        run: flutter build appbundle
+       
